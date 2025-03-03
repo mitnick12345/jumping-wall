@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jump Over Walls Game</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #87CEEB;
+        }
+
+        #gameCanvas {
+            border: 2px solid black;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <script src="game.js"></script>
+</body>
+</html>
+
+# java
+// Accessing the canvas and setting up the 2D context for drawing
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// Game variables
+const GRAVITY = 0.5;
+const JUMP_STRENGTH = 15;
+let gameSpeed = 5;
+let isJumping = false;
+let isGameOver = false;
+let levelCompleted = false;
+let jumpHeight = 0;
+let player = { x: 50, y: canvas.height - 70, width: 50, height: 70, velocityY: 0 };
+
+// Walls array
+let walls = [
+    { x: 500, y: canvas.height - 50, width: 50, height: 50 },
+    { x: 700, y: canvas.height - 100, width: 50, height: 100 }
+];
+
+// Event listener for key press to make the character jump
+document.addEventListener("keydown", (event) => {
+    if (event.key === " " && !isJumping) {
+        // Only allow jump if not already jumping
+        isJumping = true;
+        jumpHeight = 0;
+    }
+});
+
+// Game loop function
+function gameLoop() {
+    if (isGameOver) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas each frame
+
+    // Update player position
+    updatePlayer();
+
+    // Draw walls
+    walls.forEach(wall => {
+        ctx.fillStyle = "brown";
+        ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+    });
+
+    // Draw the player (child character)
+    ctx.fillStyle = "green";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+
+    // Check for wall collision and level completion
+    checkCollisions();
+
+    // Level Completion check
+    if (player.x >= canvas.width - 50 && !levelCompleted) {
+        levelCompleted = true;
+        setTimeout(() => {
+            alert("Level Completed!");
+            resetGame();
+        }, 500);
+    }
+
+    // Update the game speed (if needed, could make it harder as level progresses)
+    gameSpeed = 5;
+
+    // Call the game loop every 16ms (~60 FPS)
+    if (!isGameOver) {
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+// Function to update player position and physics
+function updatePlayer() {
+    if (isJumping) {
+        player.velocityY = -JUMP_STRENGTH;
+        jumpHeight += 1;
+        if (jumpHeight > 20) {
+            isJumping = false;
+        }
+    }
+
+    // Gravity effect on player
+    player.velocityY += GRAVITY;
+    player.y += player.velocityY;
+
+    // Prevent the player from falling below the ground
+    if (player.y >= canvas.height - player.height) {
+        player.y = canvas.height - player.height;
+        player.velocityY = 0;
+    }
+}
+
+// Function to check for collisions with walls
+function checkCollisions() {
+    walls.forEach(wall => {
+        // Simple collision detection (rectangular)
+        if (
+            player.x + player.width > wall.x &&
+            player.x < wall.x + wall.width &&
+            player.y + player.height > wall.y
+        ) {
+            isGameOver = true;
+            setTimeout(() => {
+                alert("Game Over!");
+                resetGame();
+            }, 500);
+        }
+    });
+}
+
+// Reset the game state
+function resetGame() {
+    player.x = 50;
+    player.y = canvas.height - 70;
+    player.velocityY = 0;
+    isJumping = false;
+    isGameOver = false;
+    walls = [
+        { x: 500, y: canvas.height - 50, width: 50, height: 50 },
+        { x: 700, y: canvas.height - 100, width: 50, height: 100 }
+    ];
+    levelCompleted = false;
+    gameSpeed = 5;
+    gameLoop(); // Restart the game loop
+}
+
+// Start the game loop
+gameLoop();
+
+
